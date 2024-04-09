@@ -1,31 +1,39 @@
 <?php
-$host = 'localhost'; // http://localhost/phpmyadmin/index.php?route=/sql&db=nova&table=empleado&pos=0
-$dbname = 'nova'; // http://localhost/phpmyadmin/index.php?route=/database/structure&db=nova
-$username = 'root';
-$password = ''; 
+session_start();
 
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    // Obtener datos del formulario
+// Verificar si se han enviado los datos del formulario
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Obtener los datos del formulario
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    // Consulta SQL para verificar el inicio de sesión
-    $sql = "SELECT * FROM empleados WHERE emailEmpleados = ? AND passEmpleados = ?";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$email, $password]);
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Datos de conexión a la base de datos
+    $servername = "localhost";
+    $username = "root";
+    $password_db = ""; // Contraseña de la base de datos
+    $database = "nova";
 
-    if ($result) {
-        echo "Inicio de sesión exitoso";
-        // Puedes redireccionar a otra página aquí si lo deseas
-    } else {
-        echo "Error al iniciar sesión";
+    // Crear conexión
+    $conn = new mysqli($servername, $username, $password_db, $database);
+
+    // Verificar conexión
+    if ($conn->connect_error) {
+        die("Error de conexión: " . $conn->connect_error);
     }
-} catch (PDOException $e) {
-    echo "Error en la conexión: " . $e->getMessage();
+
+    // Consulta SQL para verificar las credenciales del empleado
+    $sql = "SELECT * FROM empleado WHERE emailEmpleado = '$email' AND contraseEmpleado = '$password'";
+    $result = $conn->query($sql);
+
+    if ($result->num_rows == 1) {
+        // Credenciales válidas, iniciar sesión y redirigir al usuario a su página principal
+        $_SESSION['email'] = $email;
+        echo "<script>alert('Inicio de sesión exitoso');</script>";
+        exit();
+    } else {
+        // Credenciales inválidas, mostrar un mensaje de error
+        echo "<script>alert('Email o contraseña incorrectos.'); window.location='index.html';</script>";
+        exit();
+    }
 }
 ?>
-
